@@ -1,0 +1,14 @@
+.header {
+    background-color: #333;
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.link {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
