@@ -30,7 +30,7 @@ export default function Home() {
   return (
     <div>
       <ul className={styles.ul}>
-        {posts?.map((post) => (
+        {posts.map((post) => (
           <li key={post.id} className={styles.li}>
             <Link href={`/post/${post.id}`}>
               <div>
