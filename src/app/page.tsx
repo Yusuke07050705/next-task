@@ -4,21 +4,17 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MicroCmsPost } from "./_types/MicroCmsPost";
+import { Post } from "./_types/post";
 
 export default function Home() {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getApi = async () => {
-      const res = await fetch("https://uz0zmoad5i.microcms.io/api/v1/posts", {
-        headers: {
-          "X-MICROCMS-API-KEY": process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
-        },
-      });
-      const { contents } = await res.json();
-      setPosts(contents);
+      const res = await fetch("/api/posts");
+      const data: { posts: Post[] } = await res.json();
+      setPosts(data.posts);
       setLoading(false);
     };
 
@@ -34,10 +30,10 @@ export default function Home() {
           <li key={post.id} className={styles.li}>
             <Link href={`/post/${post.id}`}>
               <div>
-                <p className={styles.date}>{post.createdAt}</p>
+                <p className={styles.date}>{new Date(post.createdAt).toLocaleDateString()}</p>
                 <div className={styles.category}>
-                  {post.categories.map((cat, index) => (
-                    <span key={index}>{cat.name}</span>
+                  {post.postCategories.map((pc, index) => (
+                    <span key={index}>{pc.category.name}</span>
                   ))}
                 </div>
                 <h1 className={styles.title}>{post.title}</h1>
