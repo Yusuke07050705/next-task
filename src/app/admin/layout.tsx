@@ -1,6 +1,6 @@
 "use client"
 
-import Sidebar from "./sidebar/Sidebar";
+import Sidebar from "./_components/Sidebar";
 import styles from "./layout.module.css"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

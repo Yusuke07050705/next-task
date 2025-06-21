@@ -3,6 +3,7 @@
 import styles from "./NewCategory.module.css"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CategoryForm from "../_components/CategoryForm";
 
 export default function NewCategory() {
   const router = useRouter();
@@ -22,15 +23,11 @@ export default function NewCategory() {
     <div className={styles.container}>
       <h1 className={styles.header}>カテゴリー作成</h1>
 
-      <div className={styles.formGroup}>
-        <label className={styles.label}>カテゴリー名</label>
-        <input 
-          className={styles.input} 
-          type="text" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
-        />
-      </div>
+      <CategoryForm
+        name={name}
+        onNameChange={setName}
+        onSubmit={handleSubmit}
+      />
 
       <div className={styles.buttonWrapper}>
         <button className={styles.createButton} onClick={handleSubmit}>作成</button>

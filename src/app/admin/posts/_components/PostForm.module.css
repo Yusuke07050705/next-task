@@ -1,5 +1,5 @@
 .container {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 40px 20px;
 }
@@ -10,7 +10,7 @@
   margin-bottom: 30px;
 }
 
-/* .formGroup {
+.formGroup {
   margin-bottom: 20px;
 }
 
@@ -22,30 +22,27 @@
   color: #333;
 }
 
-.input {
+.input,
+.textarea,
+.select {
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
   box-sizing: border-box;
-} */
-
-.buttonWrapper {
-  margin-top: 30px;
 }
 
-.createButton {
-  background-color: #6366f1;
-  color: white;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
+.textarea {
+  min-height: 150px;
+  resize: vertical;
 }
 
-.createButton:hover {
-  background-color: #4f46e5;
+.select {
+  background-color: #fff;
+  min-height: 120px;
+}
+
+.select option:checked {
+  background-color: #e0f0ff;
 }

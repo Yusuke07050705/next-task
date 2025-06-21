@@ -4,6 +4,7 @@ import styles from "./EditCategory.module.css"
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Category } from "@/app/_types/Category";
+import CategoryForm from "../_components/CategoryForm";
 
 export default function EditCategory () {
   const { id } = useParams<{ id: string }>();
@@ -51,15 +52,11 @@ export default function EditCategory () {
     <div className={styles.container}>
       <h1 className={styles.header}>カテゴリー編集</h1>
 
-      <div className={styles.formGroup}>
-        <label className={styles.label}>カテゴリー名</label>
-        <input 
-          className={styles.input} 
-          type="text" 
-          value={category.name} 
-          onChange={(e) => handleChange(e.target.value)} 
-        />
-      </div>
+      <CategoryForm
+        name={category.name}
+        onNameChange={handleChange}
+        onSubmit={handleUpdate}
+      />
 
       <div className={styles.buttonGroup}>
         <button className={styles.updateButton} onClick={handleUpdate}>更新</button>
