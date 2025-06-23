@@ -1,0 +1,60 @@
+.section {
+  max-width: 800px;
+  width: 100%;
+  margin: 50px auto;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-bottom: 30px;
+}
+
+.body {
+  padding: 0 20px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.category {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category li {
+  border: 1px solid #1663df;
+  color: #1663df;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 20px 0 10px;
+}
+
+.text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #333;
+  margin-top: 20px;
+}
