@@ -4,15 +4,21 @@ import styles from "./NewCategory.module.css"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CategoryForm from "../_components/CategoryForm";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function NewCategory() {
   const router = useRouter();
   const [ name, setName ] = useState("");
+  const { token }  = useSupabaseSession();
 
   const handleSubmit = async () => {
+    if(!token) return;
     await fetch("/api/admin/categories", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: token,
+       },
       body: JSON.stringify({ name }),
     });
 

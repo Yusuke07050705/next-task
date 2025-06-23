@@ -4,20 +4,28 @@ import styles from "./CategoryList.module.css"
 import Link from "next/link";
 import { Category } from "@/app/_types/Category";
 import { useState, useEffect } from "react";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function CategoryList () {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+    if(!token) return;
     const fetcher = async() => {
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch("/api/admin/categories",{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
       const data: { categories: Category[] } = await res.json();
       setCategories(data.categories);
       setLoading(false);
     };
     fetcher();
-  },[]);
+  },[token]);
 
   if (loading) return <p>読み込み中です</p>;
 

@@ -5,17 +5,24 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Category } from "@/app/_types/Category";
 import CategoryForm from "../_components/CategoryForm";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 export default function EditCategory () {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+    if(!token) return;
     const fetcher = async () => {
-      const res = await fetch(`/api/admin/categories/${id}`);
+      const res = await fetch(`/api/admin/categories/${id}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      });
       const data: { category: Category } = await res.json();
       setCategory(data.category);
       setLoading(false);
@@ -29,18 +36,27 @@ export default function EditCategory () {
   };
 
   const handleUpdate  = async () => {
+    if(!token) return;
     if(!category) return;
     await fetch(`/api/admin/categories/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: token, 
+      },
       body: JSON.stringify(category),
     });
     router.push("/admin/categories");
   };
 
   const handleDelete = async () => {
+    if(!token) return;
     await fetch(`/api/admin/categories/${id}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      }
     });
     router.push("/admin/categories");
   };

@@ -5,12 +5,14 @@ import styles from "./PostDetail.module.css"
 import { useParams } from "next/navigation"
 import { Post } from "@/app/_types/post";
 import Image from "next/image"
+import { supabase } from "@/utils/supabase";
 
 export default function Page() {
   const params = useParams();
   const id = params.id as string;
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const getApi = async () => {
@@ -18,6 +20,13 @@ export default function Page() {
       const data: { post: Post } = await res.json();
       setPost(data.post);
       setLoading(false);
+
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from("post-thumbnail")
+        .getPublicUrl(data.post.thumbnailImageKey);
+
+      setThumbnailUrl(publicUrl);
     };
     getApi();
   }, [id]);
@@ -27,7 +36,15 @@ export default function Page() {
 
   return (
     <section className={styles.section}>
-      <Image src={post.thumbnailUrl} alt="" className={styles.image} width={800} height={400} />
+      {thumbnailUrl && (
+        <Image
+          src={thumbnailUrl}
+          alt="thumbnail"
+          width={400}
+          height={400}
+          className={styles.image}
+        />
+      )}
       <div className={styles.body}>
         <div className={styles.head}>
           <p className={styles.date}>{new Date(post.createdAt).toLocaleDateString()}</p>

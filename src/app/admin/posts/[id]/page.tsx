@@ -5,50 +5,64 @@ import styles from "./PostEdit.module.css"
 import { useState, useEffect } from "react"
 import { Post } from "@/app/_types/post"
 import PostForm from "../_components/PostForm"
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession"
 
 export default function PostEdit() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailImageKey, setthumbnailImageKey] = useState("");
   const [categoryOptions, setCategoryOptions] = useState<{ id: number; name: string }[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
-
+  const { token } = useSupabaseSession();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!token) return;
+
     const fetcher = async () => {
-      try{
-        const categoryRes = await fetch("/api/admin/categories");
+      try {
+        const categoryRes = await fetch("/api/admin/categories", {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+        });
         const categoryData = await categoryRes.json();
         setCategoryOptions(categoryData.categories);
 
-        const res = await fetch(`/api/posts/${id}`);
+        const res = await fetch(`/api/posts/${id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token,
+          },
+        });
         const data: { post: Post } = await res.json();
         setTitle(data.post.title);
         setContent(data.post.content);
-        setThumbnailUrl(data.post.thumbnailUrl);
+        setthumbnailImageKey(data.post.thumbnailImageKey);
         setSelectedCategoryIds(
           data.post.postCategories.map((pc) => pc.category.id)
         );
         setLoading(false);
-      } catch(error) {
+      } catch (error) {
         alert("データ取得エラー:");
         router.push("/admin/posts");
       }
     };
     fetcher();
-  }, [id]);
+  }, [id, token]);
 
   const handleUpdate = async () => {
+    if (!token) return;
     await fetch(`/api/admin/posts/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: token, },
       body: JSON.stringify({
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
         categories: selectedCategoryIds.map((id) => ({ id })),
       }),
     });
@@ -61,11 +75,18 @@ export default function PostEdit() {
   };
 
   const handleDelete = async () => {
-    await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
+    if (!token) return;
+    await fetch(`/api/admin/posts/${id}`, {
+      method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token,
+      },
+    });
     router.push("/admin/posts");
   };
 
-if (loading) return <p>読み込み中です...</p>;
+  if (loading) return <p>読み込み中です...</p>;
 
   return (
     <>
@@ -76,8 +97,8 @@ if (loading) return <p>読み込み中です...</p>;
           onTitleChange={setTitle}
           content={content}
           onContentChange={setContent}
-          thumbnailUrl={thumbnailUrl}
-          onThumbnailUrlChange={setThumbnailUrl}
+          thumbnailImageKey={thumbnailImageKey}
+          onthumbnailImageKeyChange={setthumbnailImageKey}
           selectedCategoryIds={selectedCategoryIds}
           onCategoryChange={handleCategoryChange}
           categoryOptions={categoryOptions}

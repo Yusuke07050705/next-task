@@ -1,28 +1,32 @@
 "use client"
 import styles from "./PostForm.module.css"
 import Select from "react-select"
-import React from "react"
+import React, { ChangeEvent, useEffect } from "react"
+import { supabase } from "@/utils/supabase"
+import { v4 as uudiv4 } from "uuid"
+import { useState } from "react"
+import Image from "next/image"
 
 type PostFormProps = {
   title: string;
   onTitleChange: (value: string) => void;
   content: string;
   onContentChange: (value: string) => void;
-  thumbnailUrl: string;
-  onThumbnailUrlChange: (value: string) => void;
+  thumbnailImageKey: string;
+  onthumbnailImageKeyChange: (value: string) => void;
   onSubmit: () => void;
   categoryOptions: { id: number; name: string }[];
   selectedCategoryIds: number[];
   onCategoryChange: (selectedIds: number[]) => void;
 }
 
-export default function PostForm ({
+export default function PostForm({
   title,
   onTitleChange,
   content,
   onContentChange,
-  thumbnailUrl,
-  onThumbnailUrlChange,
+  thumbnailImageKey: thumbnailImageKeyProps,
+  onthumbnailImageKeyChange,
   categoryOptions,
   selectedCategoryIds,
   onCategoryChange,
@@ -37,7 +41,55 @@ export default function PostForm ({
     selectedCategoryIds.includes(option.value)
   );
 
-  return(
+  const [thumbnailImageKey, setThumbnailImageKey] = useState(thumbnailImageKeyProps);
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(null);
+
+  useEffect(() => {
+    if(!thumbnailImageKeyProps) return;
+    setThumbnailImageKey(thumbnailImageKeyProps);
+  }, [thumbnailImageKeyProps])
+
+  useEffect(() => {
+    if (!thumbnailImageKey) return;
+
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage
+        .from("post-thumbnail")
+        .getPublicUrl(thumbnailImageKey);
+
+      setThumbnailImageUrl(publicUrl);
+    }
+    fetcher();
+  }, [thumbnailImageKey])
+
+  const handleImageChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    if (!event.target.files || event.target.files.length == 0) {
+      return;
+    }
+
+    const file = event.target.files[0];
+
+    const filePath = `private/${uudiv4()}`;
+
+    const { data, error } = await supabase.storage
+      .from("post-thumbnail")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      })
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    setThumbnailImageKey(data.path);
+    onthumbnailImageKeyChange(data.path);
+  }
+
+  return (
     <form className={styles.container}
       onSubmit={(e) => {
         e.preventDefault();
@@ -46,7 +98,7 @@ export default function PostForm ({
     >
       <div className={styles.formGroup}>
         <label className={styles.label}>タイトル</label>
-        <input 
+        <input
           className={styles.input}
           type="text"
           value={title}
@@ -56,7 +108,7 @@ export default function PostForm ({
 
       <div className={styles.formGroup}>
         <label className={styles.label}>内容</label>
-        <textarea 
+        <textarea
           className={styles.textarea}
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
@@ -64,12 +116,24 @@ export default function PostForm ({
       </div>
 
       <div className={styles.formGroup}>
-        <label className={styles.label}>サムネイルURL</label>
+        <label htmlFor="thumbnailImageKey" className={styles.label}>サムネイルURL</label>
         <input className={styles.input}
-          type="text"
-          value={thumbnailUrl}
-          onChange={(e) => onThumbnailUrlChange(e.target.value)}
+          type="file"
+          id="thumbnailImageKey"
+          onChange={handleImageChange}
+          accept="image/*"
         />
+
+        {thumbnailImageUrl && (
+          <div className={styles.image}>
+            <Image
+              src={thumbnailImageUrl}
+              alt="thumbnail"
+              width={400}
+              height={400}
+            />
+          </div>
+        )}
       </div>
 
       <div className={styles.formGroup}>
