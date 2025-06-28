@@ -1,34 +1,41 @@
 "use client"
 
 import styles from "./CategoryForm.module.css"
+import { useForm } from "react-hook-form";
+import { CategoryFormInputs } from "../_types/CategoryFormInputs";
 
 type CategoryFormProps = {
-  name: string;
-  onNameChange: (value: string) => void;
-  onSubmit: () => void;
+  defaultName?: string
+  onSubmit:( data: CategoryFormInputs) => void
 };
 
 export default function CategoryForm ({
-  name,
-  onNameChange,
+  defaultName = "",
   onSubmit,
 }: CategoryFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CategoryFormInputs>({
+    defaultValues: {
+      name: defaultName,
+    },
+  })
   return (
     <form
+      id="category-form"
       className={styles.container}
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
+      onSubmit={handleSubmit(onSubmit)}
     >
       <div className={styles.formGroup}>
         <label className={styles.label}>カテゴリー名</label>
         <input
           className={styles.input}
           type="text"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          {...register("name", {required: "カテゴリー名は必須です"})}
         />
+        {errors.name && (<p className={styles.error}>{errors.name.message}</p>)}
       </div>
     </form>
   )

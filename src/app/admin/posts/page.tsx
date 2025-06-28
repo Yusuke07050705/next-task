@@ -2,30 +2,30 @@
 
 import Link from "next/link";
 import styles from "./PostList .module.css";
-import { useState, useEffect } from "react";
 import { Post } from "@/app/_types/post";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import useSWR from "swr";
 
 export default function PostListPage() {
-  
-  const [ posts, setPosts ] = useState<Post[]>([]);
   const { token } = useSupabaseSession();
 
-  useEffect(() => {
-    if(!token) return;
+  const fetcher = (url: string) => 
+    fetch(url,{
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ?? "",
+      },
+    }).then((res) => res.json());
 
-    const fetcher = async () => {
-      const res = await fetch("/api/admin/posts", {
-        headers:{
-          'Content-Type': 'application/json',
-          Authorization: token,
-        },
-      });
-      const { posts } = await res.json();
-      setPosts(posts);
-    }
-    fetcher();
-  },[token]);
+    const{ data, error, isLoading } = useSWR(
+      token ?  "/api/admin/posts" : null,
+      fetcher
+    );
+
+
+    if(isLoading) return <p>読み込み中です・・・</p>;
+    if(error) return <p>エラーが発生しました</p>;
+  
 
   return (
     <div className={styles.container}>
@@ -37,7 +37,7 @@ export default function PostListPage() {
       </div>
 
       <ul className={styles.list}>
-        {posts.map((post) => (
+        {data?.posts.map((post: Post) => (
           <li key={post.id} className={styles.item}>
             <Link href={`/admin/posts/${post.id}`} className={styles.link}>
               <strong>{post.title}</strong>

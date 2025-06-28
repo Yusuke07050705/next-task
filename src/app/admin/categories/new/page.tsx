@@ -1,17 +1,16 @@
 "use client"
 
 import styles from "./NewCategory.module.css"
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CategoryForm from "../_components/CategoryForm";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { CategoryFormInputs } from "../_types/CategoryFormInputs";
 
 export default function NewCategory() {
   const router = useRouter();
-  const [ name, setName ] = useState("");
   const { token }  = useSupabaseSession();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (data: CategoryFormInputs) => {
     if(!token) return;
     await fetch("/api/admin/categories", {
       method: "POST",
@@ -30,13 +29,11 @@ export default function NewCategory() {
       <h1 className={styles.header}>カテゴリー作成</h1>
 
       <CategoryForm
-        name={name}
-        onNameChange={setName}
         onSubmit={handleSubmit}
       />
 
       <div className={styles.buttonWrapper}>
-        <button className={styles.createButton} onClick={handleSubmit}>作成</button>
+        <button className={styles.createButton} form="category-form" type="submit">作成</button>
       </div>
     </div>
   );

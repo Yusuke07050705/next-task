@@ -5,16 +5,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import PostForm from "../_components/PostForm"
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession"
+import { PostFormInputs } from "../_types/PostFormInputs"
 
 export default function NewPost() {
-
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailImageKey, setthumbnailImageKey] = useState("");
   const [categoryOptions, setCategoryOptions] = useState<{ id: number; name: string }[]>([]);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const { token } = useSupabaseSession();
-
   const router = useRouter();
 
   useEffect(() => {
@@ -32,7 +27,7 @@ export default function NewPost() {
     fetcher();
   }, [token]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (data: PostFormInputs) => {
     if (!token) return;
     await fetch("/api/admin/posts", {
       method: "POST",
@@ -41,41 +36,27 @@ export default function NewPost() {
         Authorization: token,
       },
       body: JSON.stringify({
-        title,
-        content,
-        thumbnailImageKey,
-        categories: selectedCategoryIds.map((id) => ({ id })),
+        title: data.title,
+        content: data.content,
+        thumbnailImageKey: data.thumbnailImageKey,
+        categories: data.categoryIds.map((id) => ({ id })),
       }),
     });
-
     router.push("/admin/posts");
-  };
-
-  const handleCategoryChange = (selectedIds: number[]) => {
-    setSelectedCategoryIds(selectedIds);
   };
 
   return (
     <>
       <div className={styles.container}>
         <h1 className={styles.header}>新規記事作成</h1>
-
         <PostForm
-          title={title}
-          onTitleChange={setTitle}
-          content={content}
-          onContentChange={setContent}
-          thumbnailImageKey={thumbnailImageKey}
-          onthumbnailImageKeyChange={setthumbnailImageKey}
-          selectedCategoryIds={selectedCategoryIds}
-          onCategoryChange={handleCategoryChange}
           categoryOptions={categoryOptions}
           onSubmit={handleSubmit}
         />
-
         <div className={styles.buttonWrapper}>
-          <button className={styles.createButton} onClick={handleSubmit}>
-            作成</button>
+          <button className={styles.createButton} type="submit" form="post-form">
+            作成
+          </button>
         </div>
       </div>
     </>

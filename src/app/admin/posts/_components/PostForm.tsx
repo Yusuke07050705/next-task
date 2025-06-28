@@ -1,129 +1,121 @@
 "use client"
 import styles from "./PostForm.module.css"
 import Select from "react-select"
-import React, { ChangeEvent, useEffect } from "react"
+import React, { ChangeEvent, useEffect, useState  } from "react"
 import { supabase } from "@/utils/supabase"
 import { v4 as uudiv4 } from "uuid"
-import { useState } from "react"
 import Image from "next/image"
+import { z } from "zod"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { required } from "zod/v4-mini"
+import { PostFormInputs } from "../_types/PostFormInputs"
+
+type CategoryOption = {
+  id: number;
+  name: string;
+}
+
+type SelectOption = {
+  value: number;
+  label: string;
+}
 
 type PostFormProps = {
-  title: string;
-  onTitleChange: (value: string) => void;
-  content: string;
-  onContentChange: (value: string) => void;
-  thumbnailImageKey: string;
-  onthumbnailImageKeyChange: (value: string) => void;
-  onSubmit: () => void;
-  categoryOptions: { id: number; name: string }[];
-  selectedCategoryIds: number[];
-  onCategoryChange: (selectedIds: number[]) => void;
+  categoryOptions: CategoryOption[];
+  onSubmit: (data: PostFormInputs) => void;
+  defaultValues?: Partial<PostFormInputs>
 }
 
 export default function PostForm({
-  title,
-  onTitleChange,
-  content,
-  onContentChange,
-  thumbnailImageKey: thumbnailImageKeyProps,
-  onthumbnailImageKeyChange,
   categoryOptions,
-  selectedCategoryIds,
-  onCategoryChange,
   onSubmit,
+  defaultValues = {},
 }: PostFormProps) {
-  const selectOptions = categoryOptions.map((category) => ({
-    value: category.id,
-    label: category.name,
-  }));
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    watch,
+    formState: { errors },
+  } = useForm<PostFormInputs> ({
+    defaultValues: {
+      title: defaultValues.title || "",
+      content: defaultValues.content || "",
+      thumbnailImageKey: defaultValues.thumbnailImageKey || "",
+      categoryIds: defaultValues.categoryIds || [], 
+    },
+  })
 
-  const selectedOptions = selectOptions.filter(option =>
-    selectedCategoryIds.includes(option.value)
-  );
-
-  const [thumbnailImageKey, setThumbnailImageKey] = useState(thumbnailImageKeyProps);
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(null);
+  const thumbnailImageKey = watch("thumbnailImageKey");
+  const [ thumbnailImageUrl, setThumbnailImageUrl ] = useState<string | null>(null);
 
   useEffect(() => {
-    if(!thumbnailImageKeyProps) return;
-    setThumbnailImageKey(thumbnailImageKeyProps);
-  }, [thumbnailImageKeyProps])
-
-  useEffect(() => {
-    if (!thumbnailImageKey) return;
+    if(!thumbnailImageKey) return;
 
     const fetcher = async () => {
       const {
         data: { publicUrl },
       } = await supabase.storage
-        .from("post-thumbnail")
-        .getPublicUrl(thumbnailImageKey);
-
+        .from("post-thumbnail").getPublicUrl(thumbnailImageKey);
       setThumbnailImageUrl(publicUrl);
     }
     fetcher();
   }, [thumbnailImageKey])
 
-  const handleImageChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ): Promise<void> => {
-    if (!event.target.files || event.target.files.length == 0) {
-      return;
-    }
-
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length == 0) return;
     const file = event.target.files[0];
-
-    const filePath = `private/${uudiv4()}`;
+    const path = `private/${uudiv4()}`;
 
     const { data, error } = await supabase.storage
       .from("post-thumbnail")
-      .upload(filePath, file, {
+      .upload(path, file, {
         cacheControl: "3600",
         upsert: false,
       })
     if (error) {
-      alert(error.message);
+      alert("画像アップロード失敗" + error.message);
       return;
     }
-    setThumbnailImageKey(data.path);
-    onthumbnailImageKeyChange(data.path);
+    setValue("thumbnailImageKey", data.path)
   }
 
+  const selectOptions: SelectOption[] = categoryOptions.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }));
+
   return (
-    <form className={styles.container}
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-    >
+    <form className={styles.container} onSubmit={handleSubmit(onSubmit)} id="post-form">
       <div className={styles.formGroup}>
-        <label className={styles.label}>タイトル</label>
+        <label htmlFor="title" className={styles.label}>タイトル</label>
         <input
           className={styles.input}
+          id="title"
           type="text"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
+          {...register("title", { required: "タイトルは必須です" })}
         />
+        {errors.title && <p className={styles.error}>{errors.title.message}</p>}
       </div>
-
       <div className={styles.formGroup}>
-        <label className={styles.label}>内容</label>
+        <label htmlFor="content" className={styles.label}>内容</label>
         <textarea
           className={styles.textarea}
-          value={content}
-          onChange={(e) => onContentChange(e.target.value)}
+          id="content"
+          {...register("content", { required: "本文は必須です" })}
         />
+        {errors.content && <p className={styles.error}>{errors.content.message}</p>}
       </div>
-
       <div className={styles.formGroup}>
-        <label htmlFor="thumbnailImageKey" className={styles.label}>サムネイルURL</label>
+        <label htmlFor="thumbnail" className={styles.label}>サムネイルURL</label>
         <input className={styles.input}
           type="file"
-          id="thumbnailImageKey"
+          id="thumbnail"
           onChange={handleImageChange}
           accept="image/*"
         />
-
         {thumbnailImageUrl && (
           <div className={styles.image}>
             <Image
@@ -135,18 +127,20 @@ export default function PostForm({
           </div>
         )}
       </div>
-
       <div className={styles.formGroup}>
-        <label className={styles.label}>カテゴリー</label>
-        <Select
-          isMulti
-          options={selectOptions}
-          value={selectedOptions}
-          onChange={(selected) => {
-            const selectedIds = selected.map((s) => s.value);
-            onCategoryChange(selectedIds);
-          }}
-          className={styles.reactSelect}
+        <label htmlFor="category" className={styles.label}>カテゴリー</label>
+        <Controller
+          control={control}
+          name="categoryIds"
+          render={({ field }) => (
+            <Select
+              isMulti
+              options={selectOptions}
+              value={selectOptions.filter((opt) => field.value.includes(opt.value))}
+              onChange={(selected) => field.onChange(selected.map((s) => s.value))}
+              className={styles.reactSelect}
+            />
+          )}
         />
       </div>
     </form>
