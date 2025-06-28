@@ -79,14 +79,12 @@ export const PUT = async (
       },
     })
 
-    for (const category of categories) {
-      await prisma.postCategory.create({
-        data: {
-          postId: post.id,
-          categoryId: category.id,
-        },
-      })
-    }
+    await prisma.postCategory.createMany({
+      data: categories.map(category => ({
+        postId: post.id,
+        categoryId: category.id,
+      })),
+    })
 
     return NextResponse.json({ status: 'OK', post: post }, { status: 200 })
   } catch (error) {
