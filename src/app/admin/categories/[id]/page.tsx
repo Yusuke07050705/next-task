@@ -4,26 +4,17 @@ import styles from "./EditCategory.module.css"
 import { useParams, useRouter } from "next/navigation";
 import CategoryForm from "../_components/CategoryForm";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import useSWR from "swr";
 import { CategoryFormInputs } from "../_types/CategoryFormInputs";
+import { useFetch } from "../../_hooks/useFetch";
+import { Category } from "@/app/_types/Category";
 
 export default function EditCategory () {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { token } = useSupabaseSession();
 
-  const fetcher = (url: string) => 
-    fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ?? "",
-      },
-    }).then((res) => res.json());
+  const { data, error, isLoading } = useFetch<{category: Category}>(`/api/admin/categories/${id}`);
 
-  const { data, error, isLoading } = useSWR(
-    token ? `/api/admin/categories/${id}` : null,
-    fetcher
-  );
 
   if(isLoading) return <p>読み込み中です・・・</p>
   if(error) return <p>カテゴリー取得エラー</p>

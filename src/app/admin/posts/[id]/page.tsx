@@ -5,37 +5,27 @@ import styles from "./PostEdit.module.css"
 import PostForm from "../_components/PostForm"
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession"
 import { PostFormInputs } from "../_types/PostFormInputs"
-import useSWR from "swr"
+import { useFetch } from "../../_hooks/useFetch"
+import { Category } from "@/app/_types/Category"
+import { Post } from "@/app/_types/post"
 
 export default function PostEdit() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { token } = useSupabaseSession();
 
-  const fetcher = (url: string) =>
-    fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ?? "",
-      },
-    }).then((res) => res.json());
+  const { data: categoryData, error: categoryError, isLoading: categoryLoading } = 
+    useFetch<{categories: Category[]}> ("/api/admin/categories");
 
-  const { data: categoryData, error: categoryError, isLoading: categoryLoading } = useSWR (
-    token ? "/api/admin/categories" : null,
-    fetcher
-  );
-
-  const { data: postData, error: postError, isLoading: postLoading } = useSWR (
-    token ? `/api/posts/${id}` : null,
-    fetcher
-  );
+  const { data: postData, error: postError, isLoading: postLoading } = 
+    useFetch<{post: Post}>(`/api/posts/${id}`);
 
   if( categoryLoading || postLoading ) return <p>読み込み中です・・・</p>;
   if( categoryError || postError ) return <p>データ取得エラー</p>;
 
   const defaultValues: Partial<PostFormInputs> = {
     title: postData?.post.title,
-    content: postData?.post.contens,
+    content: postData?.post.content,
     thumbnailImageKey: postData?.post.thumbnailImageKey,
     categoryIds: postData?.post.postCategories.map(
       (cate: { category: { id: number } }) => cate.category.id

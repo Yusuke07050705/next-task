@@ -16,7 +16,7 @@ export default function CategoryForm ({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CategoryFormInputs>({
     defaultValues: {
       name: defaultName,
@@ -34,6 +34,7 @@ export default function CategoryForm ({
           className={styles.input}
           type="text"
           {...register("name", {required: "カテゴリー名は必須です"})}
+          disabled={isSubmitting}
         />
         {errors.name && (<p className={styles.error}>{errors.name.message}</p>)}
       </div>

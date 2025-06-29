@@ -5,10 +5,7 @@ import React, { ChangeEvent, useEffect, useState  } from "react"
 import { supabase } from "@/utils/supabase"
 import { v4 as uudiv4 } from "uuid"
 import Image from "next/image"
-import { z } from "zod"
 import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { required } from "zod/v4-mini"
 import { PostFormInputs } from "../_types/PostFormInputs"
 
 type CategoryOption = {
@@ -38,7 +35,7 @@ export default function PostForm({
     setValue,
     control,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<PostFormInputs> ({
     defaultValues: {
       title: defaultValues.title || "",
@@ -96,6 +93,7 @@ export default function PostForm({
           id="title"
           type="text"
           {...register("title", { required: "タイトルは必須です" })}
+          disabled={isSubmitting}
         />
         {errors.title && <p className={styles.error}>{errors.title.message}</p>}
       </div>
@@ -105,6 +103,7 @@ export default function PostForm({
           className={styles.textarea}
           id="content"
           {...register("content", { required: "本文は必須です" })}
+          disabled={isSubmitting}
         />
         {errors.content && <p className={styles.error}>{errors.content.message}</p>}
       </div>
@@ -115,6 +114,7 @@ export default function PostForm({
           id="thumbnail"
           onChange={handleImageChange}
           accept="image/*"
+          disabled={isSubmitting}
         />
         {thumbnailImageUrl && (
           <div className={styles.image}>
@@ -135,6 +135,7 @@ export default function PostForm({
           render={({ field }) => (
             <Select
               isMulti
+              isDisabled={isSubmitting}
               options={selectOptions}
               value={selectOptions.filter((opt) => field.value.includes(opt.value))}
               onChange={(selected) => field.onChange(selected.map((s) => s.value))}

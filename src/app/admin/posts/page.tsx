@@ -3,30 +3,14 @@
 import Link from "next/link";
 import styles from "./PostList .module.css";
 import { Post } from "@/app/_types/post";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import useSWR from "swr";
+import { useFetch } from "../_hooks/useFetch";
 
 export default function PostListPage() {
-  const { token } = useSupabaseSession();
-
-  const fetcher = (url: string) => 
-    fetch(url,{
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ?? "",
-      },
-    }).then((res) => res.json());
-
-    const{ data, error, isLoading } = useSWR(
-      token ?  "/api/admin/posts" : null,
-      fetcher
-    );
-
+    const{ data, error, isLoading } = useFetch<{posts: Post[]}>("/api/admin/posts");
 
     if(isLoading) return <p>読み込み中です・・・</p>;
     if(error) return <p>エラーが発生しました</p>;
   
-
   return (
     <div className={styles.container}>
       <div className={styles.headerArea}>
