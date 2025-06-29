@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '../../../../../generated/prisma'
+import { supabase } from '@/utils/supabase'
 
 const prisma = new PrismaClient()
 
@@ -7,7 +8,7 @@ interface UpdatePostRequestBody {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 export const GET = async (
@@ -15,6 +16,11 @@ export const GET = async (
   { params }: { params: { id: string } },
 ) => {
   const { id } = params
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if (error) return NextResponse.json({ status: error.message }, { status: 400 })
 
   try {
     const post = await prisma.post.findUnique({
@@ -46,9 +52,14 @@ export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string } },
 ) => {
-  const { id } = params
+  const { id } = params;
+  const token = request.headers.get("Authorization") ?? "";
 
-  const { title, content, categories, thumbnailUrl }: UpdatePostRequestBody = await request.json()
+  const { error } = await supabase.auth.getUser(token);
+
+  if (error) return NextResponse.json({ status: error.message }, { status: 400 })
+
+  const { title, content, categories, thumbnailImageKey }: UpdatePostRequestBody = await request.json()
 
   try {
     const post = await prisma.post.update({
@@ -58,7 +69,7 @@ export const PUT = async (
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
@@ -68,14 +79,12 @@ export const PUT = async (
       },
     })
 
-    for (const category of categories) {
-      await prisma.postCategory.create({
-        data: {
-          postId: post.id,
-          categoryId: category.id,
-        },
-      })
-    }
+    await prisma.postCategory.createMany({
+      data: categories.map(category => ({
+        postId: post.id,
+        categoryId: category.id,
+      })),
+    })
 
     return NextResponse.json({ status: 'OK', post: post }, { status: 200 })
   } catch (error) {
@@ -88,7 +97,12 @@ export const DELETE = async (
   request: NextRequest,
   { params }: { params: { id: string } },
 ) => {
-  const { id } = params
+  const { id } = params;
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if (error) return NextResponse.json({ status: error.message }, { status: 400 })
 
   try {
     await prisma.post.delete({

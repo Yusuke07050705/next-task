@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Category, PrismaClient } from '../../../../../generated/prisma'
+import { supabase } from '@/utils/supabase'
 
 interface UpdateCategoryRequestBody {
   name: string
@@ -11,7 +12,12 @@ export const GET = async (
   request: NextRequest,
   { params }: { params: { id: string } },
 ) => {
-  const { id } = params
+  const { id } = params;
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if(error) return NextResponse.json({ status: error.message}, { status: 400 })
 
   try {
     const category = await prisma.category.findUnique({
@@ -36,6 +42,12 @@ export const PUT = async (
 
   // リクエストのbodyを取得
   const { name }: UpdateCategoryRequestBody = await request.json()
+
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if(error) return NextResponse.json({ status: error.message}, { status: 400 })
 
   try {
     // idを指定して、Categoryを更新
@@ -62,6 +74,11 @@ export const DELETE = async (
 ) => {
   // paramsの中にidが入っているので、それを取り出す
   const { id } = params
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if(error) return NextResponse.json({ status: error.message}, { status: 400 })
 
   try {
     // idを指定して、Categoryを削除

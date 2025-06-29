@@ -2,22 +2,15 @@
 
 import Link from "next/link";
 import styles from "./PostList .module.css";
-import { useState, useEffect } from "react";
 import { Post } from "@/app/_types/post";
+import { useFetch } from "../_hooks/useFetch";
 
 export default function PostListPage() {
+    const{ data, error, isLoading } = useFetch<{posts: Post[]}>("/api/admin/posts");
+
+    if(isLoading) return <p>読み込み中です・・・</p>;
+    if(error) return <p>エラーが発生しました</p>;
   
-  const [ posts, setPosts ] = useState<Post[]>([]);
-
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch("/api/admin/posts");
-      const { posts } = await res.json();
-      setPosts(posts);
-    }
-    fetcher();
-  },[]);
-
   return (
     <div className={styles.container}>
       <div className={styles.headerArea}>
@@ -28,7 +21,7 @@ export default function PostListPage() {
       </div>
 
       <ul className={styles.list}>
-        {posts.map((post) => (
+        {data?.posts.map((post: Post) => (
           <li key={post.id} className={styles.item}>
             <Link href={`/admin/posts/${post.id}`} className={styles.link}>
               <strong>{post.title}</strong>

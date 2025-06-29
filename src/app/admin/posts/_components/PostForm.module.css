@@ -46,3 +46,7 @@
 .select option:checked {
   background-color: #e0f0ff;
 }
+
+.image {
+  margin-top: 8px;
+}

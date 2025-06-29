@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '../../../../generated/prisma'
+import { supabase } from '@/utils/supabase'
 
 const prisma = new PrismaClient()
 
@@ -9,10 +10,16 @@ interface CreatePostRequestBody {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 export const GET = async (request: NextRequest) => {
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if (error) return NextResponse.json({ status: error.message }, { status: 400 })
+
   try {
     const posts = await prisma.post.findMany({
       include: {
@@ -41,32 +48,36 @@ export const GET = async (request: NextRequest) => {
 
 // POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
 export const POST = async (request: NextRequest, context: any) => {
+  const token = request.headers.get("Authorization") ?? "";
+
+  const { error } = await supabase.auth.getUser(token);
+
+  if (error) return NextResponse.json({ status: error.message }, { status: 400 })
+
   try {
     // リクエストのbodyを取得
     const body = await request.json()
 
-    // bodyの中からtitle, content, categories, thumbnailUrlを取り出す
-    const { title, content, categories, thumbnailUrl }: CreatePostRequestBody = body
+    // bodyの中からtitle, content, categories, thumbnailImageKeyを取り出す
+    const { title, content, categories, thumbnailImageKey }: CreatePostRequestBody = body
 
     // 投稿をDBに生成
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
     // 記事とカテゴリーの中間テーブルのレコードをDBに生成
     // 本来複数同時生成には、createManyというメソッドがあるが、sqliteではcreateManyが使えないので、for文1つずつ実施
-    for (const category of categories) {
-      await prisma.postCategory.create({
-        data: {
-          categoryId: category.id,
-          postId: data.id,
-        },
-      })
-    }
+    await prisma.postCategory.createMany({
+      data: categories.map(category => ({
+        categoryId: category.id,
+        postId: data.id,
+      })),
+    })
 
     // レスポンスを返す
     return NextResponse.json({
